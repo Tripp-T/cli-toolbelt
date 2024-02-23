@@ -1,0 +1,4 @@
+/target
+/builds
+/dynamic_assets/*
+/tmp
