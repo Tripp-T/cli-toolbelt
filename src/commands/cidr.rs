@@ -1,8 +1,4 @@
-use anyhow::Result;
-use clap::Parser;
-use log::warn;
-
-use crate::models::CidrNetwork;
+use crate::{models::CidrNetwork, *};
 
 #[derive(Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

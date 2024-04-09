@@ -1,9 +1,4 @@
-use anyhow::{anyhow, bail};
-use log::info;
-use std::{net::SocketAddr, process::exit, str::FromStr};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-use crate::models::Host;
+use crate::{models::Host, *};
 
 #[derive(clap::Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

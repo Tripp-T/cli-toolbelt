@@ -2,3 +2,4 @@
 /builds
 /dynamic_assets/*
 /tmp
+.direnv

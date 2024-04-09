@@ -1,7 +1,4 @@
-use std::{net::SocketAddr, str::FromStr};
-
-use anyhow::{anyhow, Result};
-use clap::Parser;
+use crate::*;
 use trust_dns_resolver::{
     config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
     error::ResolveErrorKind,

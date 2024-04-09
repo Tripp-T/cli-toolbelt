@@ -22,6 +22,7 @@ pub enum Command {
     /// Establish a SSL TCP connection and display SSL certificate
     Ssl(ssl::Opts),
     /// Generate a random number from a range
+    #[clap(alias = "roll")]
     Rng(rng::Opts),
     /// Create a TCP connection (like telnet)
     Tcp(tcp::Opts),

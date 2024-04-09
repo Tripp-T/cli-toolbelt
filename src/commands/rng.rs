@@ -1,6 +1,4 @@
-use anyhow::{anyhow, Result};
-use clap::Parser;
-use rand::Rng;
+use crate::*;
 
 #[derive(Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

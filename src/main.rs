@@ -1,6 +1,22 @@
-#![allow(dead_code)]
-use anyhow::Result;
-use clap::Parser;
+#![allow(dead_code, unused_imports)]
+use ::{
+    anyhow::{anyhow, bail, ensure, Context, Result},
+    clap::Parser,
+    colored::Colorize,
+    rand::Rng,
+    serde::{Deserialize, Serialize},
+    std::{
+        net::{IpAddr, SocketAddr, TcpStream},
+        path::PathBuf,
+        process::exit,
+        str::FromStr,
+        sync::Arc,
+    },
+    tokio::io::{AsyncReadExt, AsyncWriteExt},
+    tracing::{debug, error, info, level_filters::LevelFilter, trace, warn},
+    tracing_subscriber::EnvFilter,
+    url::Url,
+};
 
 mod commands;
 mod models;
@@ -17,13 +33,12 @@ struct Opts {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    std::env::var("RUST_LOG")
-        .map_err(|e| {
-            if e == std::env::VarError::NotPresent {
-                std::env::set_var("RUST_LOG", "info");
-            }
-        })
-        .ok();
-    env_logger::init();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env()?,
+        )
+        .init();
     Opts::parse().cmd.run().await
 }

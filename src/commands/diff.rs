@@ -1,8 +1,4 @@
-use std::path::PathBuf;
-
-use anyhow::{anyhow, Result};
-use clap::Parser;
-use colored::Colorize;
+use crate::*;
 
 #[derive(Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

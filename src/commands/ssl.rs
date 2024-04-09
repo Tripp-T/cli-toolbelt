@@ -1,13 +1,9 @@
-use std::{net::TcpStream, str::FromStr};
-
-use anyhow::{anyhow, bail, Ok, Result};
-use clap::Parser;
-// use num_bigint::BigInt;
+use crate::*;
 use openssl::{
     ssl::{SslConnector, SslMethod},
     string::OpensslString,
 };
-use url::Url;
+use std::net::TcpStream;
 
 #[derive(Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

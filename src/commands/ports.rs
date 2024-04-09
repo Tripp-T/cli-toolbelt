@@ -1,9 +1,7 @@
-use std::net::IpAddr;
-
-use clap::Parser;
-use tokio::io::AsyncReadExt;
-
-use crate::models::{Host, NumberInput, Pinger};
+use crate::{
+    models::{Host, NumberInput, Pinger},
+    *,
+};
 
 #[derive(Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

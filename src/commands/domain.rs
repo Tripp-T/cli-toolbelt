@@ -1,9 +1,8 @@
-use std::sync::Arc;
-
-use anyhow::anyhow;
+use crate::{
+    models::{domain::DomainValidator, Domain},
+    *,
+};
 use trust_dns_resolver::TokioAsyncResolver;
-
-use crate::models::{domain::DomainValidator, Domain};
 
 #[derive(clap::Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {
