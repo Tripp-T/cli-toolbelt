@@ -75,11 +75,7 @@ impl Domain {
     }
 }
 
-static VALID_TLDS_URL: &str = "https://data.iana.org/TLD/tlds-alpha-by-domain.txt";
-const CACHED_TLDS: &str = include_str!("../../dynamic_assets/tlds-alpha-by-domain.txt");
-
 pub struct DomainValidator {
-    valid_tlds: RwLock<Vec<String>>,
     refreshing: AtomicBool,
     has_refreshed: AtomicBool,
     refresh_finish_listeners: Mutex<Vec<tokio::sync::oneshot::Sender<()>>>,
@@ -87,13 +83,7 @@ pub struct DomainValidator {
 
 impl DomainValidator {
     pub fn new() -> anyhow::Result<Self> {
-        let valid_tlds = CACHED_TLDS
-            .lines()
-            .filter(|line| !line.starts_with('#'))
-            .map(|line| line.to_lowercase())
-            .collect::<Vec<_>>();
         Ok(Self {
-            valid_tlds: RwLock::new(valid_tlds),
             refreshing: AtomicBool::new(false),
             has_refreshed: AtomicBool::new(false),
             refresh_finish_listeners: Mutex::new(Vec::new()),
@@ -101,7 +91,7 @@ impl DomainValidator {
     }
 
     pub async fn is_valid_tld(&self, tld: &str) -> bool {
-        tld == "local" || self.valid_tlds.read().await.contains(&tld.to_string())
+        tld.len() >= 2 && tld.len() <= 63
     }
 
     pub fn is_refreshing(&self) -> bool {
@@ -112,43 +102,6 @@ impl DomainValidator {
             .load(std::sync::atomic::Ordering::Relaxed)
     }
 
-    /// If `Ok(None)` is returned, the refresh is already in progress.
-    /// If `Ok(Some(()))` is returned, the refresh has completed.
-    /// If `Err(_)` is returned, the refresh failed.
-    pub async fn refresh_valid_tlds(&self) -> anyhow::Result<Option<()>> {
-        if self
-            .refreshing
-            .swap(true, std::sync::atomic::Ordering::Relaxed)
-        {
-            return Ok(None);
-        }
-        println!("Refreshing valid TLDs...");
-        let new_tlds = reqwest::get(VALID_TLDS_URL)
-            .await
-            .map_err(|e| anyhow!("failed to fetch valid TLDs: {e}"))?
-            .text()
-            .await
-            .map_err(|e| anyhow!("failed to parse valid TLDs: {e}"))?
-            .lines()
-            .filter(|line| !line.starts_with('#'))
-            .map(|line| line.to_lowercase())
-            .collect::<Vec<_>>();
-
-        *self.valid_tlds.write().await = new_tlds;
-
-        self.has_refreshed
-            .store(true, std::sync::atomic::Ordering::Relaxed);
-        self.refreshing
-            .store(false, std::sync::atomic::Ordering::Relaxed);
-
-        let mut listeners = self.refresh_finish_listeners.lock().await;
-        for listener in listeners.drain(..) {
-            listener.send(()).unwrap();
-        }
-
-        Ok(Some(()))
-    }
-
     pub async fn validate(&self, domain: &Domain) -> anyhow::Result<()> {
         let tld = domain
             .tld()
@@ -156,16 +109,6 @@ impl DomainValidator {
         if !self.is_valid_tld(tld).await {
             if self.has_refreshed() {
                 bail!("failed to validate domain '{domain}': TLD '{tld}' is not valid");
-            }
-            match self.refresh_valid_tlds().await? {
-                // refresh was successful
-                Some(_) => {}
-                // refresh is already in progress
-                None => {
-                    let (tx, rx) = tokio::sync::oneshot::channel();
-                    self.refresh_finish_listeners.lock().await.push(tx);
-                    rx.await?;
-                }
             }
             if !self.is_valid_tld(tld).await {
                 bail!("failed to validate domain '{domain}': TLD '{tld}' is not valid");
