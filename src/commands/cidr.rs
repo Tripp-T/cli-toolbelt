@@ -1,4 +1,4 @@
-use crate::{models::CidrNetwork, *};
+use crate::*;
 
 #[derive(Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

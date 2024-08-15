@@ -1,4 +1,4 @@
-use crate::{models::Host, *};
+use crate::*;
 
 #[derive(clap::Parser, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Opts {

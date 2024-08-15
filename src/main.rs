@@ -18,6 +18,10 @@ use ::{
     url::Url,
 };
 
+mod inputs;
+use inputs::prelude::*;
+mod clients;
+use clients::prelude::*;
 mod commands {
     mod cidr;
     mod diff;
@@ -64,7 +68,6 @@ mod commands {
         }
     }
 }
-mod models;
 mod utils;
 
 /// A CLI tool for IT related tasks.

@@ -1,50 +1,44 @@
 use std::{fmt::Display, str::FromStr};
 
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, bail, Context};
 use num::{CheckedAdd, Integer};
 
 /// A number input can be a single number, a range, or a step range
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct NumberInput<T>
+pub struct NumberRange<T>(pub Vec<T>)
 where
-    T: Integer + FromStr + Copy + Display + CheckedAdd,
-{
-    pub input: String,
-    pub values: Vec<T>,
-}
+    T: Integer + FromStr + Copy + Display + CheckedAdd;
 
-impl<T: Integer + FromStr + Copy + Display + CheckedAdd> Display for NumberInput<T> {
+impl<T: Integer + FromStr + Copy + Display + CheckedAdd> Display for NumberRange<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let values = self
-            .values
-            .iter()
-            .map(|v| v.to_string())
-            .collect::<Vec<_>>()
-            .join(", ");
-        write!(f, "{}", values)
+        for (i, v) in self.0.iter().enumerate() {
+            if i > 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{v}")?;
+        }
+        Ok(())
     }
 }
-
-impl<T: Integer + FromStr + Copy + Display + CheckedAdd> std::str::FromStr for NumberInput<T> {
+impl<T: Integer + FromStr<Err = TErr> + Copy + Display + CheckedAdd, TErr: Display>
+    std::str::FromStr for NumberRange<T>
+{
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
         if s.is_empty() {
-            return Err(anyhow::anyhow!("Empty input"));
+            bail!("Empty input");
         }
         if let Ok(n) = s.parse::<T>() {
-            return Ok(NumberInput {
-                input: s.to_string(),
-                values: vec![n],
-            });
+            return Ok(NumberRange(vec![n]));
         } else if s.contains("..") {
             let mut parts = s.split("..");
             let start = parts
                 .next()
-                .ok_or_else(|| anyhow::anyhow!("No start value"))?
+                .context("missing start value")?
                 .parse::<T>()
-                .map_err(|_| anyhow!("invalid start value"))?;
+                .map_err(|e| anyhow!("invalid start value: {e}"))?;
             let mut inclusive_end = false;
             let end = parts
                 .next()
@@ -81,10 +75,7 @@ impl<T: Integer + FromStr + Copy + Display + CheckedAdd> std::str::FromStr for N
                     values.push(i);
                 }
             }
-            return Ok(NumberInput {
-                input: s.to_string(),
-                values,
-            });
+            return Ok(NumberRange(values));
         } else if s.contains('-') {
             let mut parts = s.split('-');
             let start = parts
@@ -120,10 +111,7 @@ impl<T: Integer + FromStr + Copy + Display + CheckedAdd> std::str::FromStr for N
             for i in num::range_step_inclusive(start, end, step) {
                 values.push(i);
             }
-            return Ok(NumberInput {
-                input: s.to_string(),
-                values,
-            });
+            return Ok(NumberRange(values));
         }
         bail!("Invalid input: {s}")
     }
